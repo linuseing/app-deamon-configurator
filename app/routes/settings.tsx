@@ -1,10 +1,10 @@
 import type { Route } from "./+types/settings";
 import { redirect } from "react-router";
 import { SettingsForm } from "~/components/SettingsForm";
-import { parseSettingsCookie, stripQuotes, isAddonMode } from "~/lib/settings.server";
+import { getAppSettings, stripQuotes, isAddonMode } from "~/lib/settings.server";
 import type { AppSettings } from "~/lib/types";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Settings | AppDaemon Configurator" },
     { name: "description", content: "Configure Home Assistant and AppDaemon settings" },
@@ -13,9 +13,8 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const cookieHeader = request.headers.get("Cookie") ?? "";
-  // In add-on mode, we still read cookie settings for categories
-  // but HA URL/token/appdaemon path are auto-configured
-  const settings = parseSettingsCookie(cookieHeader);
+  // Fetch effective settings (Add-on defaults + Cookie overrides)
+  const settings = await getAppSettings(cookieHeader);
   const addonMode = isAddonMode();
   return { settings, addonMode };
 }
@@ -26,7 +25,7 @@ export async function action({ request }: Route.ActionArgs) {
   const haToken = stripQuotes(formData.get("haToken") as string);
   const appdaemonPath = stripQuotes(formData.get("appdaemonPath") as string);
   const categoriesRaw = formData.get("categories") as string;
-  
+
   // Parse categories from JSON
   let categories: string[] = [];
   try {

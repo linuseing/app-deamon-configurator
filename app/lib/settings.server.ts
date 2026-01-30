@@ -51,16 +51,33 @@ export function parseSettingsCookie(cookieHeader: string): AppSettings | undefin
  * Otherwise, falls back to cookie-based settings
  */
 export async function getAppSettings(cookieHeader: string): Promise<AppSettings | undefined> {
+  let settings: AppSettings | undefined;
+
   // Check for add-on mode first
   if (isAddonMode()) {
     const addonSettings = await getAddonSettings();
     if (addonSettings) {
-      return addonSettings;
+      settings = addonSettings;
     }
   }
 
-  // Fall back to cookie-based settings
-  return parseSettingsCookie(cookieHeader);
+  // Get cookie-based settings
+  const cookieSettings = parseSettingsCookie(cookieHeader);
+
+  // If we have both, allow cookie settings to override specific fields
+  if (settings && cookieSettings) {
+    if (cookieSettings.appdaemonPath) {
+      settings.appdaemonPath = cookieSettings.appdaemonPath;
+    }
+    // Setup categories merge or override if needed, though usually cookie source of truth for categories in addon mode
+    if (cookieSettings.categories) {
+      settings.categories = cookieSettings.categories;
+    }
+  } else if (cookieSettings) {
+    settings = cookieSettings;
+  }
+
+  return settings;
 }
 
 /**

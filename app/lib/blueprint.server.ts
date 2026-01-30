@@ -50,7 +50,9 @@ export async function getAllBlueprints(appdaemonPath?: string): Promise<Blueprin
       }
     }
   } catch (error) {
-    console.warn(`Failed to read blueprints from ${searchDir}:`, error);
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.warn(`Failed to read blueprints from ${searchDir}:`, error);
+    }
   }
 
   return blueprints;

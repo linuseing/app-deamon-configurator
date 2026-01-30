@@ -11,6 +11,7 @@ const createSettingsSchema = (addonMode: boolean) =>
     haUrl: z.string().url("Please enter a valid URL").or(z.literal("")),
     haToken: z.string(),
     // AppDaemon path is optional in add-on mode (auto-configured)
+    // Providing a value overrides the default
     appdaemonPath: addonMode
       ? z.string().optional()
       : z.string().min(1, "AppDaemon apps folder path is required"),
@@ -49,40 +50,41 @@ export function SettingsForm({ defaultValues, addonMode = false }: SettingsFormP
     <Form method="post" onSubmit={handleSubmit}>
       <div className="space-y-6">
         {/* AppDaemon Section - Hidden in add-on mode */}
-        {!addonMode && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-base-content border-b border-base-300 pb-2">
-              AppDaemon Configuration
-            </h3>
-            
-            <div className="space-y-1.5">
-              <label htmlFor="appdaemonPath" className="block text-sm font-medium text-base-content">
-                Apps Folder Path
-              </label>
-              <input
-                type="text"
-                id="appdaemonPath"
-                placeholder="/config/appdaemon/apps"
-                className={`input input-bordered input-sm w-full bg-base-200 border-base-300 focus:border-primary font-mono text-sm ${errors.appdaemonPath ? "input-error" : ""}`}
-                {...register("appdaemonPath")}
-              />
-              {errors.appdaemonPath ? (
-                <p className="text-xs text-error">{errors.appdaemonPath.message}</p>
-              ) : (
-                <p className="text-xs text-base-content/50">
-                  Path to AppDaemon apps folder containing apps.yaml
-                </p>
-              )}
-            </div>
+        {/* AppDaemon Section */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-base-content border-b border-base-300 pb-2">
+            AppDaemon Configuration
+          </h3>
+
+          <div className="space-y-1.5">
+            <label htmlFor="appdaemonPath" className="block text-sm font-medium text-base-content">
+              Apps Folder Path
+            </label>
+            <input
+              type="text"
+              id="appdaemonPath"
+              placeholder="/config/appdaemon/apps"
+              className={`input input-bordered input-sm w-full bg-base-200 border-base-300 focus:border-primary font-mono text-sm ${errors.appdaemonPath ? "input-error" : ""}`}
+              {...register("appdaemonPath")}
+            />
+            {errors.appdaemonPath ? (
+              <p className="text-xs text-error">{errors.appdaemonPath.message}</p>
+            ) : (
+              <p className="text-xs text-base-content/50">
+                {addonMode
+                  ? "Default: /share/appdaemon/apps. Change only if using a custom path."
+                  : "Path to AppDaemon apps folder containing apps.yaml"}
+              </p>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Categories Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-base-content border-b border-base-300 pb-2">
             Instance Categories
           </h3>
-          
+
           <div className="space-y-3">
             <div className="flex gap-2">
               <input
@@ -114,7 +116,7 @@ export function SettingsForm({ defaultValues, addonMode = false }: SettingsFormP
                 Add
               </button>
             </div>
-            
+
             {categories.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
@@ -151,7 +153,7 @@ export function SettingsForm({ defaultValues, addonMode = false }: SettingsFormP
                 No categories defined. Add categories to organize your instances.
               </p>
             )}
-            
+
             {/* Hidden input to pass categories to form */}
             <input type="hidden" name="categories" value={JSON.stringify(categories)} />
           </div>
@@ -164,7 +166,7 @@ export function SettingsForm({ defaultValues, addonMode = false }: SettingsFormP
               Home Assistant Connection
               <span className="text-xs font-normal text-base-content/50 ml-2">(optional)</span>
             </h3>
-            
+
             <div className="space-y-1.5">
               <label htmlFor="haUrl" className="block text-sm font-medium text-base-content">
                 Home Assistant URL
