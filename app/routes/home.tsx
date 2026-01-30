@@ -3,8 +3,9 @@ import { Link } from "react-router";
 import { getAllBlueprints } from "~/lib/blueprint.server";
 import { getAppSettings, isAddonMode } from "~/lib/settings.server";
 import { BlueprintList } from "~/components/BlueprintList";
+import { UploadModal } from "~/components/UploadModal";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "AppDaemon Configurator" },
     { name: "description", content: "Configure AppDaemon apps with a blueprint-style UI" },
@@ -14,11 +15,11 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const cookieHeader = request.headers.get("Cookie") ?? "";
   const settings = await getAppSettings(cookieHeader);
-  
+
   const blueprints = await getAllBlueprints(settings?.appdaemonPath);
   // In add-on mode, settings are auto-configured; only show warning in standalone mode
   const needsSettings = !isAddonMode() && !settings?.appdaemonPath;
-  
+
   return { blueprints, needsSettings };
 }
 
@@ -27,11 +28,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold">Blueprints</h1>
-        <p className="text-sm text-base-content/50 mt-1">
-          Select a blueprint to configure
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Blueprints</h1>
+          <p className="text-sm text-base-content/50 mt-1">
+            Select a blueprint to configure
+          </p>
+        </div>
+        <UploadModal />
       </div>
 
       {needsSettings && (

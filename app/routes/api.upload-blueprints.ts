@@ -1,5 +1,4 @@
 import { type ActionFunctionArgs, data } from "react-router";
-import { unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@react-router/node";
 import AdmZip from "adm-zip";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -21,16 +20,9 @@ export async function action({ request }: ActionFunctionArgs) {
         return data({ error: "Failed to access AppDaemon apps directory" }, { status: 500 });
     }
 
-    // Create an upload handler that stores the file in memory
-    const uploadHandler = unstable_composeUploadHandlers(
-        unstable_createMemoryUploadHandler({
-            maxPartSize: 50 * 1024 * 1024, // 50MB
-        })
-    );
-
     let formData;
     try {
-        formData = await unstable_parseMultipartFormData(request, uploadHandler);
+        formData = await request.formData();
     } catch (err) {
         console.error("Upload error:", err);
         return data({ error: "Failed to process upload" }, { status: 400 });
