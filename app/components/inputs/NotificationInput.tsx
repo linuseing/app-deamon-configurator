@@ -1,8 +1,9 @@
-import { useFetcher } from "react-router";
+import { useRouteLoaderData } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import type { BaseInputProps } from "./types";
+import type { loader as rootLoader } from "~/root";
 
-interface NotificationInputProps extends BaseInputProps {}
+interface NotificationInputProps extends BaseInputProps { }
 
 interface NotificationService {
   value: string;
@@ -19,7 +20,14 @@ export function NotificationInput({
 }: NotificationInputProps) {
   const error = errors?.[name];
 
-  const fetcher = useFetcher<{ services?: NotificationService[]; error?: string }>();
+  // Get basename to ensure we fetch from the correct path (handling Ingress)
+  const rootData = useRouteLoaderData<typeof rootLoader>("root");
+  const basename = rootData?.basename === "/" ? "" : rootData?.basename || "";
+
+  const [services, setServices] = useState<NotificationService[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   const [suggestions, setSuggestions] = useState<NotificationService[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filter, setFilter] = useState("");
@@ -30,33 +38,55 @@ export function NotificationInput({
 
   const { ref: inputRef, ...restRegister } = register(name, { required });
 
-  // Update suggestions when data loads
-  useEffect(() => {
-    if (fetcher.data) {
-      if (fetcher.data.services) {
-        setSuggestions(fetcher.data.services);
-        // Show suggestions if we just fetched (user had focused the field)
-        if (hasFetched) {
-          setShowSuggestions(true);
-        }
-      } else if (fetcher.data.error) {
-        console.error("Error fetching notification services:", fetcher.data.error);
-        setSuggestions([]);
-      }
-    }
-  }, [fetcher.data, hasFetched]);
+  const fetchServices = async () => {
+    if (isLoading) return;
 
-  const filteredSuggestions = filter
-    ? suggestions.filter((s) =>
-        s.value.toLowerCase().includes(filter.toLowerCase()) ||
-        s.label.toLowerCase().includes(filter.toLowerCase())
-      )
-    : suggestions;
+    setIsLoading(true);
+    setFetchError(null);
+    try {
+      const response = await fetch(`${basename}/api/notify-services`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.services) {
+          setServices(data.services);
+          setSuggestions(data.services);
+          // Show suggestions if we just fetched (user had focused the field)
+          if (!hasFetched) {
+            setShowSuggestions(true);
+          }
+        } else if (data.error) {
+          console.error("Error fetching notification services:", data.error);
+          setFetchError(data.error);
+          setSuggestions([]);
+        }
+      } else {
+        console.error("Failed to fetch notification services:", response.status);
+        setFetchError(`Failed to fetch: ${response.status}`);
+      }
+    } catch (e) {
+      console.error("Error fetching notification services:", e);
+      setFetchError("Network error");
+    } finally {
+      setIsLoading(false);
+      setHasFetched(true);
+    }
+  };
+
+  // Update filtered suggestions when filter changes
+  useEffect(() => {
+    const filtered = services.filter((s) =>
+      s.value.toLowerCase().includes(filter.toLowerCase()) ||
+      s.label.toLowerCase().includes(filter.toLowerCase())
+    );
+    setSuggestions(filtered);
+  }, [filter, services]);
+
+  const filteredSuggestions = suggestions;
 
   // Reset selected index when suggestions change
   useEffect(() => {
     setSelectedIndex(-1);
-  }, [filteredSuggestions.length, filter]);
+  }, [filteredSuggestions.length]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -90,7 +120,7 @@ export function NotificationInput({
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((prev) => 
+      setSelectedIndex((prev) =>
         prev < filteredSuggestions.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === "ArrowUp") {
@@ -130,9 +160,8 @@ export function NotificationInput({
           onKeyDown={handleKeyDown}
           onFocus={() => {
             // Fetch data on first focus
-            if (!hasFetched && fetcher.state === "idle") {
-              setHasFetched(true);
-              fetcher.load("/api/notify-services");
+            if (!hasFetched) {
+              fetchServices();
             }
             // Show suggestions when focused if we have data
             if (suggestions.length > 0) {
@@ -149,12 +178,15 @@ export function NotificationInput({
           type="button"
           tabIndex={-1}
           onClick={() => {
-            fetcher.load("/api/notify-services");
+            fetchServices();
+            if (suggestions.length > 0) {
+              setShowSuggestions(true);
+            }
           }}
-          className={`btn btn-sm btn-ghost ml-1 ${fetcher.state !== "idle" ? "loading" : ""}`}
+          className={`btn btn-sm btn-ghost ml-1 ${isLoading ? "loading" : ""}`}
           title="Refresh notification services from Home Assistant"
         >
-          {!fetcher.state || fetcher.state === "idle" ? (
+          {!isLoading ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -173,7 +205,7 @@ export function NotificationInput({
         </button>
 
         {showSuggestions && filteredSuggestions.length > 0 && (
-          <ul 
+          <ul
             ref={listRef}
             className="absolute z-50 top-full left-0 right-12 mt-1 max-h-60 overflow-y-auto bg-base-100 border border-base-300 rounded-lg shadow-lg"
           >
@@ -184,9 +216,8 @@ export function NotificationInput({
                 ref={(el) => {
                   itemRefs.current[index] = el;
                 }}
-                className={`px-3 py-2 text-sm cursor-pointer flex flex-col ${
-                  index === selectedIndex ? "bg-primary text-primary-content" : "hover:bg-base-200"
-                }`}
+                className={`px-3 py-2 text-sm cursor-pointer flex flex-col ${index === selectedIndex ? "bg-primary text-primary-content" : "hover:bg-base-200"
+                  }`}
                 onMouseDown={(e) => {
                   e.preventDefault(); // Prevent blur on input
                   selectSuggestion(s);
@@ -194,21 +225,20 @@ export function NotificationInput({
                 onMouseEnter={() => setSelectedIndex(index)}
               >
                 <span className="font-medium">{s.label}</span>
-                <span className={`text-xs font-mono ${
-                  index === selectedIndex ? "text-primary-content/70" : "text-base-content/50"
-                }`}>{s.value}</span>
+                <span className={`text-xs font-mono ${index === selectedIndex ? "text-primary-content/70" : "text-base-content/50"
+                  }`}>{s.value}</span>
               </li>
             ))}
           </ul>
         )}
-        {showSuggestions && fetcher.state === "idle" && fetcher.data && !fetcher.data.error && suggestions.length === 0 && (
+        {showSuggestions && !isLoading && !fetchError && suggestions.length === 0 && (
           <div className="absolute z-50 top-full left-0 right-12 mt-1 p-3 bg-base-100 border border-base-300 rounded-lg shadow-lg text-sm text-base-content/60">
             No notification services found
           </div>
         )}
-        {fetcher.data?.error && (
+        {fetchError && (
           <div className="absolute z-50 top-full left-0 right-12 mt-1 p-3 bg-error/10 border border-error rounded-lg shadow-lg text-sm text-error">
-            {fetcher.data.error}
+            {fetchError}
           </div>
         )}
       </div>
