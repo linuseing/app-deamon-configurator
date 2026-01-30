@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -37,11 +38,16 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  // Get basename from root loader to set <base> tag for relative asset resolution
+  const data = useRouteLoaderData<typeof loader>("root");
+  const basename = data?.basename || "/";
+
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <base href={basename === "/" ? "/" : `${basename}/`} />
         <Meta />
         <Links />
       </head>
