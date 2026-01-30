@@ -44,9 +44,16 @@ const build = await import("./build/server/index.js");
 
 // Handle all other requests with React Router
 // Handle all other requests with React Router
+// Handle all other requests with React Router
 app.use(createRequestHandler({
     build,
     mode: process.env.NODE_ENV,
+    getLoadContext(req) {
+        // Pass ingress path to loaders if needed, though headers are available
+        return {
+            ingressPath: req.headers["x-ingress-path"],
+        };
+    },
 }));
 
 const port = process.env.PORT || 3000;

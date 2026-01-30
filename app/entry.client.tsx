@@ -6,7 +6,10 @@ startTransition(() => {
     hydrateRoot(
         document,
         <StrictMode>
-            <HydratedRouter />
+            <HydratedRouter
+                // @ts-ignore
+                basename={window.BASENAME}
+            />
         </StrictMode>
     );
 });
