@@ -10,4 +10,5 @@ export default [
   route("api/entities", "routes/api.entities.ts"),
   route("api/notify-services", "routes/api.notify-services.ts"),
   route("api/instances/save", "routes/api.instances.save.ts"),
+  route("api/upload-blueprints", "routes/api.upload-blueprints.ts"),
 ] satisfies RouteConfig;
