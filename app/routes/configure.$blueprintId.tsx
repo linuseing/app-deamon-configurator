@@ -50,10 +50,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   // Parse config values (blueprintId is already from params)
   const { blueprintId: _, _instanceName, _category, _tags, ...values } = data;
-  
+
   // Get the instance name from the form
   const instanceName = stripQuotes(_instanceName as string) || blueprintId.replace(/-/g, "_");
-  
+
   // Get category and tags
   const category = stripQuotes(_category as string) || undefined;
   let tags: string[] = [];
@@ -77,7 +77,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   for (const [key, value] of Object.entries(values)) {
     const inputDef = flatInputs[key];
     const strValue = stripQuotes(value as string);
-    
+
     if (!inputDef?.selector) {
       typedValues[key] = strValue;
       continue;
@@ -108,7 +108,18 @@ export async function action({ request, params }: Route.ActionArgs) {
   });
   const encodedPreview = Buffer.from(previewData).toString("base64");
 
-  return redirect("/preview", {
+  const ingressPath = request.headers.get("x-ingress-path") || "/";
+  // Clean up basename (remove trailing slash)
+  let basename = ingressPath;
+  if (basename !== "/" && basename.endsWith("/")) {
+    basename = basename.slice(0, -1);
+  }
+
+  // Ensure redirect URL includes the basename (ingress path)
+  const redirectUrl = `${basename}/preview`;
+  console.log(`[Configure] Redirecting to: ${redirectUrl}`);
+
+  return redirect(redirectUrl, {
     headers: {
       "Set-Cookie": `preview_data=${encodedPreview}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600`,
     },
