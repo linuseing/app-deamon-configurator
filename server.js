@@ -43,7 +43,8 @@ app.use(express.static("build/client", {
 const build = await import("./build/server/index.js");
 
 // Handle all other requests with React Router
-app.all("*", createRequestHandler({
+// Handle all other requests with React Router
+app.use(createRequestHandler({
     build,
     mode: process.env.NODE_ENV,
 }));
