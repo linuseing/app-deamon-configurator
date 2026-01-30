@@ -34,8 +34,8 @@ interface ConfigureFormProps {
   availableCategories?: string[];
 }
 
-export function ConfigureForm({ 
-  blueprint, 
+export function ConfigureForm({
+  blueprint,
   blueprintId,
   defaultInstanceName,
   isEditing = false,
@@ -73,8 +73,28 @@ export function ConfigureForm({
     reset(defaultValues);
   }, [blueprintId, reset]);
 
+  // Get basename to ensure we submit to the correct path (handling Ingress)
+  // We can't use useRouteLoaderData here easily as we are in a component
+  // so we'll rely on global window.BASENAME if available, or assume standard routing
+  const [action, setAction] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const basename = (window as any).BASENAME || "";
+      // Construct the action URL relative to the basename
+      // The current URL is already correct, so we can just use "." to submit to the current route
+      // BUT, to be safe and explicit, we can reconstruction it. 
+      // Actually, if we just let Form submit to the current URL, it should work IF the router handles it.
+      // However, the issue is that without an action, it posts to the current URL. 
+      // If the current URL is /addon_ingress/configure/foo, it posts there.
+      // But if something is stripping the ingress path...
+      // Let's force the action handling.
+      setAction(`${basename}/configure/${blueprintId}`);
+    }
+  }, [blueprintId]);
+
   return (
-    <Form method="post" onSubmit={handleSubmit}>
+    <Form method="post" action={action} onSubmit={handleSubmit}>
       <input type="hidden" name="blueprintId" value={blueprintId} />
 
       {/* Instance Name Field */}
@@ -89,7 +109,7 @@ export function ConfigureForm({
             id="_instanceName"
             placeholder={blueprintId.replace(/-/g, "_")}
             className={`input input-bordered input-sm w-full font-mono text-sm bg-base-200 border-base-300 focus:border-primary ${errors._instanceName ? "input-error" : ""}`}
-            {...register("_instanceName", { 
+            {...register("_instanceName", {
               required: "Instance name is required",
               pattern: {
                 value: /^[a-z][a-z0-9_]*$/,
