@@ -12,9 +12,15 @@ import { Navbar } from "./components/Navbar";
 import { isAddonMode } from "./lib/settings.server";
 import "./app.css";
 
-// Provide addon mode info to the entire app
-export async function loader() {
-  return { addonMode: isAddonMode() };
+// Provide addon mode info and ingress path to the entire app
+export async function loader({ request }: Route.LoaderArgs) {
+  const ingressPath = request.headers.get("x-ingress-path") || "/";
+  // Clean up basename (remove trailing slash)
+  let basename = ingressPath;
+  if (basename !== "/" && basename.endsWith("/")) {
+    basename = basename.slice(0, -1);
+  }
+  return { addonMode: isAddonMode(), basename };
 }
 
 export const links: Route.LinksFunction = () => [
@@ -49,10 +55,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { addonMode } = loaderData;
+  const { addonMode, basename } = loaderData;
 
   return (
     <div className="min-h-screen flex flex-col">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.BASENAME = ${JSON.stringify(basename)};`,
+        }}
+      />
       <Navbar addonMode={addonMode} />
       <main className="flex-1">
         <Outlet />

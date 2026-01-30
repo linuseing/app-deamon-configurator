@@ -34,6 +34,7 @@ COPY --from=build-env /app/build ./build
 
 # Copy run script
 COPY run.sh /run.sh
+COPY server.js /app/server.js
 RUN chmod a+x /run.sh
 
 # Set environment
