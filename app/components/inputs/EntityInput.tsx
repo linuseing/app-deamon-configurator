@@ -1,6 +1,7 @@
-import { useFetcher } from "react-router";
+import { useRouteLoaderData } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import type { BaseInputProps } from "./types";
+import type { loader as rootLoader } from "~/root";
 
 interface EntityInputProps extends BaseInputProps {
   domain?: string | string[];
@@ -20,7 +21,12 @@ export function EntityInput({
   const domainHint = Array.isArray(domain) ? domain.join(", ") : domain;
   const error = errors?.[name];
 
-  const fetcher = useFetcher<{ entities: { value: string; label: string }[] }>();
+  // Get basename to ensure we fetch from the correct path (handling Ingress)
+  const rootData = useRouteLoaderData<typeof rootLoader>("root");
+  const basename = rootData?.basename === "/" ? "" : rootData?.basename || "";
+
+  const [entities, setEntities] = useState<{ value: string; label: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<{ value: string; label: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filter, setFilter] = useState("");
@@ -38,29 +44,54 @@ export function EntityInput({
       const domains = Array.isArray(domain) ? domain : [domain];
       params.append("domain", domains.join(","));
     }
-    return `/api/entities?${params.toString()}`;
+    // Prepend basename if it exists. Note: basename shouldn't end with slash here if API path starts with it
+    return `${basename}/api/entities?${params.toString()}`;
   };
 
-  // Update suggestions when data loads
-  useEffect(() => {
-    if (fetcher.data?.entities) {
-      setSuggestions(fetcher.data.entities);
-      // Show suggestions if we just fetched (user had focused the field)
-      if (hasFetched) {
-        setShowSuggestions(true);
-      }
-    }
-  }, [fetcher.data, hasFetched]);
+  const fetchEntities = async () => {
+    if (isLoading) return;
 
-  const filteredSuggestions = suggestions.filter((s) =>
-    s.value.toLowerCase().includes(filter.toLowerCase()) ||
-    s.label.toLowerCase().includes(filter.toLowerCase())
-  );
+    setIsLoading(true);
+    try {
+      const response = await fetch(buildFetchUrl());
+      if (response.ok) {
+        const data = await response.json();
+        if (data.entities) {
+          setEntities(data.entities);
+          setSuggestions(data.entities);
+          // Show suggestions if we just fetched (user had focused the field)
+          if (!hasFetched) {
+            setShowSuggestions(true);
+          }
+        }
+      } else {
+        console.error("Failed to fetch entities:", response.status);
+      }
+    } catch (e) {
+      console.error("Error fetching entities:", e);
+    } finally {
+      setIsLoading(false);
+      setHasFetched(true);
+    }
+  };
+
+  // Update filtered suggestions when filter changes
+  useEffect(() => {
+    if (entities.length > 0) {
+      const filtered = entities.filter((s) =>
+        s.value.toLowerCase().includes(filter.toLowerCase()) ||
+        s.label.toLowerCase().includes(filter.toLowerCase())
+      );
+      setSuggestions(filtered);
+    }
+  }, [filter, entities]);
+
+  const filteredSuggestions = suggestions;
 
   // Reset selected index when suggestions change
   useEffect(() => {
     setSelectedIndex(-1);
-  }, [filteredSuggestions.length, filter]);
+  }, [filteredSuggestions.length]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -94,7 +125,7 @@ export function EntityInput({
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((prev) => 
+      setSelectedIndex((prev) =>
         prev < filteredSuggestions.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === "ArrowUp") {
@@ -136,9 +167,8 @@ export function EntityInput({
           onKeyDown={handleKeyDown}
           onFocus={() => {
             // Fetch data on first focus
-            if (!hasFetched && fetcher.state === "idle") {
-              setHasFetched(true);
-              fetcher.load(buildFetchUrl());
+            if (!hasFetched) {
+              fetchEntities();
             }
             // Show suggestions when focused if we have data
             if (suggestions.length > 0) {
@@ -155,13 +185,15 @@ export function EntityInput({
           type="button"
           tabIndex={-1}
           onClick={() => {
-            setHasFetched(true);
-            fetcher.load(buildFetchUrl());
+            fetchEntities();
+            if (suggestions.length > 0) {
+              setShowSuggestions(true);
+            }
           }}
-          className={`btn btn-sm btn-ghost ml-1 ${fetcher.state !== "idle" ? "loading" : ""}`}
+          className={`btn btn-sm btn-ghost ml-1 ${isLoading ? "loading" : ""}`}
           title="Refresh entities from Home Assistant"
         >
-          {!fetcher.state || fetcher.state === "idle" ? (
+          {!isLoading ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -180,7 +212,7 @@ export function EntityInput({
         </button>
 
         {showSuggestions && filteredSuggestions.length > 0 && (
-          <ul 
+          <ul
             ref={listRef}
             className="absolute z-50 top-full left-0 right-12 mt-1 max-h-60 overflow-y-auto bg-base-100 border border-base-300 rounded-lg shadow-lg"
           >
@@ -191,9 +223,8 @@ export function EntityInput({
                 ref={(el) => {
                   itemRefs.current[index] = el;
                 }}
-                className={`px-3 py-2 text-sm cursor-pointer flex flex-col ${
-                  index === selectedIndex ? "bg-primary text-primary-content" : "hover:bg-base-200"
-                }`}
+                className={`px-3 py-2 text-sm cursor-pointer flex flex-col ${index === selectedIndex ? "bg-primary text-primary-content" : "hover:bg-base-200"
+                  }`}
                 onMouseDown={(e) => {
                   e.preventDefault(); // Prevent blur on input
                   selectSuggestion(s);
@@ -201,9 +232,8 @@ export function EntityInput({
                 onMouseEnter={() => setSelectedIndex(index)}
               >
                 <span className="font-medium">{s.label}</span>
-                <span className={`text-xs font-mono ${
-                  index === selectedIndex ? "text-primary-content/70" : "text-base-content/50"
-                }`}>{s.value}</span>
+                <span className={`text-xs font-mono ${index === selectedIndex ? "text-primary-content/70" : "text-base-content/50"
+                  }`}>{s.value}</span>
               </li>
             ))}
           </ul>
