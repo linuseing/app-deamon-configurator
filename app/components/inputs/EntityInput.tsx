@@ -24,6 +24,12 @@ export function EntityInput({
   // Get basename to ensure we fetch from the correct path (handling Ingress)
   const rootData = useRouteLoaderData<typeof rootLoader>("root");
   const basename = rootData?.basename === "/" ? "" : rootData?.basename || "";
+  // Fallback to window.BASENAME if hook fails, just in case
+  const effectiveBasename = basename || (typeof window !== "undefined" ? (window as any).BASENAME : "") || "";
+
+  useEffect(() => {
+    console.log("[EntityInput] Mounted", { name, basename, effectiveBasename, rootData });
+  }, [name, basename, effectiveBasename, rootData]);
 
   const [entities, setEntities] = useState<{ value: string; label: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,18 +50,24 @@ export function EntityInput({
       const domains = Array.isArray(domain) ? domain : [domain];
       params.append("domain", domains.join(","));
     }
-    // Prepend basename if it exists. Note: basename shouldn't end with slash here if API path starts with it
-    return `${basename}/api/entities?${params.toString()}`;
+    const url = `${effectiveBasename}/api/entities?${params.toString()}`;
+    console.log("[EntityInput] Built URL:", url);
+    return url;
   };
 
   const fetchEntities = async () => {
+    console.log("[EntityInput] fetchEntities called", { isLoading, hasFetched });
     if (isLoading) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch(buildFetchUrl());
+      const url = buildFetchUrl();
+      console.log("[EntityInput] Fetching:", url);
+      const response = await fetch(url);
+      console.log("[EntityInput] Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log("[EntityInput] Data received:", data);
         if (data.entities) {
           setEntities(data.entities);
           setSuggestions(data.entities);
