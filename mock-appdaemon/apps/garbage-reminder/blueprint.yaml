@@ -1,0 +1,31 @@
+blueprint:
+  name: Garbage Reminder
+  description: Send reminders about garbage collection days
+  domain: automation
+  author: AppDaemon Configurator
+
+input:
+  notify_service:
+    name: Notification Service
+    description: The notification service to use for reminders
+    selector:
+      notify: {}
+
+  reminder_time:
+    name: Reminder Time
+    description: Time of day to send the reminder
+    default: "19:00:00"
+    selector:
+      time: {}
+
+  days_before:
+    name: Days Before
+    description: How many days before collection to send reminder
+    default: 1
+    selector:
+      number:
+        min: 0
+        max: 3
+        step: 1
+        unit_of_measurement: days
+        mode: box

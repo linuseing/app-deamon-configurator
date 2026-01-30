@@ -1,0 +1,35 @@
+blueprint:
+  name: Presence Notification
+  description: Send notifications when a person arrives or leaves home
+  domain: automation
+  author: AppDaemon Configurator
+
+input:
+  person_entity:
+    name: Person
+    description: The person entity to monitor
+    selector:
+      entity:
+        domain: person
+
+  notify_service:
+    name: Notification Service
+    description: The notification service to use
+    selector:
+      notify: {}
+
+  arrival_message:
+    name: Arrival Message
+    description: Message to send when the person arrives home
+    default: "Welcome home!"
+    selector:
+      text:
+        multiline: false
+
+  departure_message:
+    name: Departure Message
+    description: Message to send when the person leaves home
+    default: "Goodbye, safe travels!"
+    selector:
+      text:
+        multiline: false

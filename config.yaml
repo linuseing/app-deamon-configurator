@@ -1,0 +1,41 @@
+name: "AppDaemon Blueprint Configurator"
+version: "1.0.1"
+slug: "appdaemon_configurator"
+description: "Configure AppDaemon apps using a blueprint-style UI inspired by Home Assistant blueprints"
+url: "https://github.com/your-username/app-demon-config"
+
+# Supported architectures
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+
+# Ingress configuration for seamless HA UI integration
+ingress: true
+ingress_port: 3000
+panel_icon: "mdi:robot"
+panel_title: "AppDaemon Config"
+
+# API access
+homeassistant_api: true
+auth_api: true
+
+# Volume mappings
+map:
+  - addon_config:rw
+  - share:rw
+
+# Startup configuration
+init: false
+startup: application
+boot: auto
+
+# Add-on options with defaults
+options:
+  appdaemon_apps_path: "/share/appdaemon/apps"
+
+# Schema for options validation
+schema:
+  appdaemon_apps_path: str

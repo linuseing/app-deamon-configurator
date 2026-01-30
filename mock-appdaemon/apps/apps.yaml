@@ -1,0 +1,46 @@
+motion_light_kitchen:
+  module: motion-light.motion_light
+  class: MotionLight
+  _blueprint: motion-light
+  motion_sensor: binary_sensor.kitchen_motion
+  target_light: light.kitchen_light_strip
+  delay: 1360
+  brightness: 80
+  only_after_sunset: true
+motion_light_hallway:
+  module: motion-light.motion_light
+  class: MotionLight
+  _blueprint: motion-light
+  motion_sensor: binary_sensor.hallway_motion
+  target_light: light.hallway
+  delay: 1700
+  brightness: 100
+  only_after_sunset: false
+presence_alert:
+  module: presence-notification.presence_notification
+  class: PresenceNotification
+  _blueprint: presence-notification
+  person_entity: person.linus_eing
+  notify_service: notify.persistent_notification
+  arrival_message: Welcome home!
+  departure_message: Goodbye, safe travels!
+thermostat_scheduler:
+  module: thermostat-control.thermostat_control
+  class: ThermostatScheduler
+  climate_entity: climate.living_room
+  morning_temp: 21
+  evening_temp: 19
+  night_temp: 17
+garbage_reminder:
+  module: garbage-reminder.garbage_reminder
+  class: GarbageReminder
+  notify_service: notify.family_group
+  reminder_time: 19:00:00
+  days_before: 1
+motion_light3:
+  module: motion_light
+  class: MotionLight
+  _blueprint: motion-light
+  delay: 120
+  brightness: 100
+  only_after_sunset: false

@@ -1,0 +1,43 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark, dim;
+}
+
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+}
+
+html {
+  @apply bg-base-100 text-base-content;
+}
+
+body {
+  @apply min-h-screen antialiased;
+}
+
+/* Compact form controls */
+.input-sm {
+  @apply h-8 text-sm;
+}
+
+.btn-sm {
+  @apply h-8 min-h-8 text-sm;
+}
+
+.select-sm {
+  @apply h-8 min-h-8 text-sm;
+}
+
+.textarea-sm {
+  @apply text-sm;
+}
+
+/* Focus states */
+.input:focus,
+.select:focus,
+.textarea:focus {
+  @apply outline-none ring-1 ring-primary/50;
+}

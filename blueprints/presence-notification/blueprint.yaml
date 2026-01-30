@@ -1,0 +1,60 @@
+blueprint:
+  name: Presence Notification
+  description: Send a notification when someone arrives or leaves home
+  domain: automation
+  author: AppDaemon Configurator
+
+input:
+  person:
+    name: Person
+    description: The person entity to monitor for presence changes
+    selector:
+      entity:
+        domain: person
+
+  notify_service:
+    name: Notification Service
+    description: The notification service to use (e.g., notify.mobile_app_phone)
+    selector:
+      notify: {}
+
+  arrival_message:
+    name: Arrival Message
+    description: Message to send when the person arrives home
+    default: "{{ person }} has arrived home"
+    selector:
+      text:
+        multiline: true
+
+  departure_message:
+    name: Departure Message
+    description: Message to send when the person leaves home
+    default: "{{ person }} has left home"
+    selector:
+      text:
+        multiline: true
+
+  notify_on_arrival:
+    name: Notify on Arrival
+    description: Send notification when person arrives
+    default: true
+    selector:
+      boolean: {}
+
+  notify_on_departure:
+    name: Notify on Departure
+    description: Send notification when person leaves
+    default: true
+    selector:
+      boolean: {}
+
+  cooldown:
+    name: Cooldown Period
+    description: Minimum time between notifications (prevents spam from flapping)
+    default: 300
+    selector:
+      number:
+        min: 0
+        max: 3600
+        step: 60
+        unit_of_measurement: seconds

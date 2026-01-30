@@ -1,0 +1,38 @@
+blueprint:
+  name: Section Test
+  domain: automation
+  description: Testing sections
+  author: Agent
+  input:
+    top_level:
+      name: Top Level
+      selector:
+        text: {}
+    advanced_settings:
+      name: Advanced
+      icon: mdi-cog
+      collapsed: true
+      input:
+        nested_bool:
+          name: Nested Boolean
+          selector:
+            boolean: {}
+        nested_number:
+          name: Nested Number
+          selector:
+            number:
+              min: 0
+              max: 100
+              mode: box
+    deeply_nested:
+      name: Deeply Nested Root
+      icon: mdi-folder
+      input:
+        level_2:
+          name: Level 2 Section
+          icon: mdi-folder-open
+          input:
+            deep_text:
+              name: Deep Text
+              selector:
+                text: {}

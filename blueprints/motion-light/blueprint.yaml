@@ -1,0 +1,52 @@
+blueprint:
+  name: Motion Light
+  description: Turn on a light when motion is detected, and turn it off after a configurable delay
+  domain: automation
+  author: AppDaemon Configurator
+
+input:
+  motion_sensor:
+    name: Motion Sensor
+    description: The binary sensor that detects motion
+    selector:
+      entity:
+        domain: binary_sensor
+        device_class: motion
+
+  target_light:
+    name: Target Light
+    description: The light to control when motion is detected
+    selector:
+      entity:
+        domain: light
+
+  delay:
+    name: Turn Off Delay
+    description: Time to wait before turning off the light after motion stops
+    default: 120
+    selector:
+      number:
+        min: 0
+        max: 3600
+        step: 10
+        unit_of_measurement: seconds
+        mode: slider
+
+  brightness:
+    name: Brightness
+    description: Brightness level when turning on the light (0-100)
+    default: 100
+    selector:
+      number:
+        min: 0
+        max: 100
+        step: 5
+        unit_of_measurement: "%"
+        mode: slider
+
+  only_after_sunset:
+    name: Only After Sunset
+    description: Only turn on the light after sunset
+    default: false
+    selector:
+      boolean: {}

@@ -1,0 +1,49 @@
+blueprint:
+  name: Thermostat Scheduler
+  description: Schedule thermostat temperature changes throughout the day
+  domain: automation
+  author: AppDaemon Configurator
+
+input:
+  climate_entity:
+    name: Climate Entity
+    description: The thermostat/climate entity to control
+    selector:
+      entity:
+        domain: climate
+
+  morning_temp:
+    name: Morning Temperature
+    description: Temperature to set in the morning (7:00 AM)
+    default: 21
+    selector:
+      number:
+        min: 15
+        max: 28
+        step: 0.5
+        unit_of_measurement: "°C"
+        mode: box
+
+  evening_temp:
+    name: Evening Temperature
+    description: Temperature to set in the evening (6:00 PM)
+    default: 20
+    selector:
+      number:
+        min: 15
+        max: 28
+        step: 0.5
+        unit_of_measurement: "°C"
+        mode: box
+
+  night_temp:
+    name: Night Temperature
+    description: Temperature to set at night (10:00 PM)
+    default: 18
+    selector:
+      number:
+        min: 15
+        max: 28
+        step: 0.5
+        unit_of_measurement: "°C"
+        mode: box
