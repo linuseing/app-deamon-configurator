@@ -1,4 +1,4 @@
-import type { Route } from "./+types/instances";
+import type { Route } from "./+types/instances._index";
 import { Link, useFetcher } from "react-router";
 import { useState, useEffect, useMemo } from "react";
 import { getAppInstances, deleteAppInstance } from "~/lib/apps.server";

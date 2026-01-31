@@ -25,6 +25,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const settings = await getAppSettings(cookieHeader);
 
   const appdaemonPath = settings?.appdaemonPath || (isAddonMode() ? "/share/appdaemon/apps" : null);
+
   if (!appdaemonPath) {
     throw new Response("AppDaemon path not configured", { status: 400 });
   }
@@ -72,10 +73,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   // Parse config values (remove metadata fields from form data)
   const { blueprintId: _, _instanceName, _category, _tags, ...values } = data;
-  
+
   // Get the new instance name (for renaming)
   const newInstanceName = stripQuotes(_instanceName as string) || instanceId;
-  
+
   // Get category and tags
   const category = stripQuotes(_category as string) || undefined;
   let tags: string[] = [];
@@ -101,7 +102,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     for (const [key, value] of Object.entries(values)) {
       const inputDef = flatInputs[key];
       const strValue = stripQuotes(value as string);
-      
+
       if (!inputDef?.selector) {
         typedValues[key] = strValue;
         continue;
@@ -313,7 +314,7 @@ function ConfigureFormWithValues({
             id="_instanceName"
             placeholder={blueprintId.replace(/-/g, "_")}
             className={`input input-bordered input-sm w-full font-mono text-sm bg-base-200 border-base-300 focus:border-primary ${errors._instanceName ? "input-error" : ""}`}
-            {...register("_instanceName", { 
+            {...register("_instanceName", {
               required: "Instance name is required",
               pattern: {
                 value: /^[a-z][a-z0-9_]*$/,
