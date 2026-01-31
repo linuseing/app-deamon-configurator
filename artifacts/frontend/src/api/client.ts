@@ -1,4 +1,6 @@
-const API_BASE = '/api';
+// Use relative path for Ingress compatibility
+// The API is served from the same path as the frontend
+const API_BASE = './api';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
