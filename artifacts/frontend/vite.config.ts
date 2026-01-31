@@ -5,6 +5,8 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Use relative paths for assets - essential for HA Ingress compatibility
+  base: './',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
