@@ -64,7 +64,7 @@ export function UploadModal() {
 
                     <fetcher.Form
                         method="post"
-                        action={`${typeof window !== "undefined" ? (window as any).BASENAME || "" : ""}/api/upload-blueprints`}
+                        action="/api/upload-blueprints"
                         encType="multipart/form-data"
                         ref={formRef}
                         className="mt-4 space-y-4"

@@ -17,18 +17,9 @@ app.use(morgan("tiny"));
 // Ingress Path Handling Middleware
 app.use((req, res, next) => {
     const ingressPath = req.headers["x-ingress-path"];
-
-    // If ingress path is present and URL starts with it, rewrite URL to strip it
-    if (typeof ingressPath === "string" && ingressPath && req.url.startsWith(ingressPath)) {
-        const originalUrl = req.url;
-        req.url = req.url.slice(ingressPath.length) || "/";
-
-        // Ensure it starts with /
-        if (!req.url.startsWith("/")) {
-            req.url = "/" + req.url;
-        }
-
-        console.log(`Rewrote Ingress URL: ${originalUrl} -> ${req.url}`);
+    if (typeof ingressPath === "string" && ingressPath) {
+        console.log(`[Server] Ingress Path detected: ${ingressPath}`);
+        console.log(`[Server] Request URL: ${req.url}`);
     }
     next();
 });

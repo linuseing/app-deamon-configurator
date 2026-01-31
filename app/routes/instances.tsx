@@ -70,10 +70,9 @@ export default function Instances({ loaderData }: Route.ComponentProps) {
 
   const confirmDelete = () => {
     if (deleteTarget) {
-      const basename = typeof window !== "undefined" ? (window as any).BASENAME || "" : "";
       fetcher.submit(
         { intent: "delete", instanceId: deleteTarget },
-        { method: "POST", action: `${basename}/instances` }
+        { method: "POST" }
       );
     }
   };
