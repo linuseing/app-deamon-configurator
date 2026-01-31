@@ -1,5 +1,5 @@
 import { useRemixForm } from "remix-hook-form";
-import { Form } from "react-router";
+import { Form, useActionData, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import type { Blueprint, BlueprintInput, Selector } from "~/lib/types";
 import {
@@ -43,6 +43,17 @@ export function ConfigureForm({
 }: ConfigureFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
+
+  // Handle success action to navigate away (Instant Save)
+  const actionData = useActionData<{ success?: boolean; instanceId?: string; error?: string }>();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (actionData?.success) {
+      navigate("/");
+    }
+  }, [actionData, navigate]);
+
   // Build default values from blueprint inputs
   const defaultValues: Record<string, unknown> = {
     _instanceName: defaultInstanceName || blueprintId.replace(/-/g, "_"),
@@ -205,6 +216,12 @@ export function ConfigureForm({
         </div>
       </div>
 
+      {actionData?.error && (
+        <div className="mb-4 p-3 rounded-lg border border-error/30 bg-error/5 text-error text-sm">
+          {actionData.error}
+        </div>
+      )}
+
       <div className="divide-y divide-base-300">
         {blueprint.input && Object.entries(blueprint.input).map(([key, input]) => (
           <ConfigItem
@@ -233,11 +250,11 @@ export function ConfigureForm({
           {isSubmitting ? (
             <>
               <span className="loading loading-spinner loading-xs" />
-              Generating...
+              Saving...
             </>
           ) : (
             <>
-              Generate Configuration
+              Save Configuration
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"

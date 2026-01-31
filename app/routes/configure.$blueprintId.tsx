@@ -1,6 +1,7 @@
 import type { Route } from "./+types/configure.$blueprintId";
 import { redirect, Link } from "react-router";
-import { getBlueprint, generateAppsYaml } from "~/lib/blueprint.server";
+import { getBlueprint } from "~/lib/blueprint.server";
+import { createAppInstance, getAppInstances, generateInstanceId, toPascalCase } from "~/lib/apps.server";
 import { getAppSettings, stripQuotes } from "~/lib/settings.server";
 import { flattenInputs } from "~/lib/types";
 import { ConfigureForm } from "~/components/ConfigureForm";
@@ -95,24 +96,40 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
   }
 
-  const yaml = generateAppsYaml(blueprint, typedValues, blueprintId as string, instanceName);
+  // Check for existing instances to generate unique ID
+  const existingInstances = await getAppInstances(settings?.appdaemonPath || "");
+  const existingIds = existingInstances.map((i) => i.id);
 
-  const previewData = JSON.stringify({
-    yaml,
-    blueprintId,
-    blueprintName: blueprint.blueprint.name,
-    instanceName,
-    config: typedValues,
-    category,
-    tags,
-  });
-  const encodedPreview = Buffer.from(previewData).toString("base64");
+  // Generate instance ID
+  const instanceId = _instanceName ? stripQuotes(_instanceName as string) : generateInstanceId(blueprintId as string, existingIds);
 
-  return redirect("/preview", {
-    headers: {
-      "Set-Cookie": `preview_data=${encodedPreview}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600`,
-    },
-  });
+  // Check if instance ID already exists (if manually provided)
+  if (_instanceName && existingIds.includes(instanceId)) {
+    return { error: `Instance "${instanceId}" already exists. Please choose a different name.` };
+  }
+
+  // Derive module and class names
+  const moduleName = (blueprintId as string).replace(/-/g, "_");
+  const className = toPascalCase(moduleName);
+
+  try {
+    // Save the instance
+    await createAppInstance(
+      settings?.appdaemonPath || "",
+      instanceId,
+      moduleName,
+      className,
+      typedValues,
+      blueprintId as string,
+      category,
+      tags
+    );
+
+    return { success: true, instanceId };
+  } catch (error) {
+    console.error("Failed to save instance:", error);
+    return { error: `Failed to save instance: ${(error as Error).message}` };
+  }
 }
 
 export default function Configure({ loaderData }: Route.ComponentProps) {
