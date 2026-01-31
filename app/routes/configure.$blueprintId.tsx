@@ -108,18 +108,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   });
   const encodedPreview = Buffer.from(previewData).toString("base64");
 
-  const ingressPath = request.headers.get("x-ingress-path") || "/";
-  // Clean up basename (remove trailing slash)
-  let basename = ingressPath;
-  if (basename !== "/" && basename.endsWith("/")) {
-    basename = basename.slice(0, -1);
-  }
-
-  // Ensure redirect URL includes the basename (ingress path)
-  const redirectUrl = `${basename}/preview`;
-  console.log(`[Configure] Redirecting to: ${redirectUrl}`);
-
-  return redirect(redirectUrl, {
+  return redirect("/preview", {
     headers: {
       "Set-Cookie": `preview_data=${encodedPreview}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600`,
     },
