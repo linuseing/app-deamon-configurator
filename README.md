@@ -78,7 +78,11 @@ input:
 | `text` | Text input (single or multiline) |
 | `boolean` | Toggle switch |
 | `select` | Dropdown with predefined options |
+| `time` | Time picker |
+| `datetime` | Date and time picker |
 | `notify` | Notification service selector |
+
+📚 **For detailed documentation**, see [DOCS.md](./DOCS.md) - includes complete selector reference, architecture details, and AI agent guidance.
 
 ## Development
 
