@@ -1,7 +1,37 @@
+# OS files
 .DS_Store
-.env
-/node_modules/
 
-# React Router
-/.react-router/
-/build/
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Build outputs
+artifacts/frontend/dist/
+artifacts/backend/dist/
+artifacts/backend/public/
+
+# TypeScript build info
+*.tsbuildinfo
+*.d.ts
+!artifacts/*/src/**/*.d.ts
+
+# Vite
+artifacts/frontend/vite.config.js
+artifacts/frontend/vite.config.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+coverage/

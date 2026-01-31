@@ -1,0 +1,28 @@
+{
+  "name": "appdaemon-configurator-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "morgan": "^1.10.0",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/compression": "^1.8.1",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^22.15.29",
+    "tsx": "^4.19.4",
+    "typescript": "^5.9.2"
+  }
+}

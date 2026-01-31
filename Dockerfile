@@ -2,48 +2,45 @@
 # Uses multi-stage build for efficient image size
 
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.18
-FROM node:20-alpine AS build-env
 
-# Copy source and install dependencies
-WORKDIR /app
-COPY package.json package-lock.json ./
-COPY app/ ./app/
-COPY public/ ./public/
-COPY vite.config.ts tsconfig.json react-router.config.ts ./
+# Build stage - Frontend
+FROM node:22-alpine AS frontend-build
+WORKDIR /app/frontend
+COPY artifacts/frontend/package*.json ./
+RUN npm ci
+COPY artifacts/frontend/ ./
+RUN npm run build
 
-# Install all dependencies and build
-RUN npm ci && npm run build
-
-# Production dependencies only
-FROM node:20-alpine AS production-deps
-WORKDIR /app
-COPY package.json package-lock.json ./
+# Build stage - Backend
+FROM node:22-alpine AS backend-build
+WORKDIR /app/backend
+COPY artifacts/backend/package*.json ./
+RUN npm ci
+COPY artifacts/backend/ ./
+RUN npm run build
 RUN npm ci --omit=dev
 
 # Final image based on Home Assistant base image
 FROM $BUILD_FROM
 
-# Install Node.js runtime and Nginx
-RUN apk add --no-cache nodejs npm nginx
-
-# Create nginx directories
-RUN mkdir -p /run/nginx
-
-# Copy Nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Install Node.js runtime
+RUN apk add --no-cache nodejs npm
 
 # Copy built application
 WORKDIR /app
-COPY package.json package-lock.json ./
-COPY --from=production-deps /app/node_modules ./node_modules
-COPY --from=build-env /app/build ./build
+COPY --from=backend-build /app/backend/dist ./dist
+COPY --from=backend-build /app/backend/node_modules ./node_modules
+COPY --from=backend-build /app/backend/package.json ./
 
-# Copy run script and server
+# Copy built frontend to public directory (served by backend)
+COPY --from=frontend-build /app/frontend/dist ./public
+
+# Copy run script
 COPY run.sh /run.sh
-COPY server.js /app/server.js
 RUN chmod a+x /run.sh
 
 # Set environment
 ENV NODE_ENV=production
+ENV PORT=8099
 
 CMD [ "/run.sh" ]
