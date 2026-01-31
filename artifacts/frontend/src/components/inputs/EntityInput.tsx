@@ -37,7 +37,8 @@ export function EntityInput({
       const domains = Array.isArray(domain) ? domain : [domain];
       params.append("domain", domains.join(","));
     }
-    return `/api/entities?${params.toString()}`;
+    // Use relative path for Ingress compatibility
+    return `./api/entities?${params.toString()}`;
   };
 
   const fetchEntities = async () => {

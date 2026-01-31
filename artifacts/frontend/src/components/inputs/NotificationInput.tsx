@@ -36,7 +36,8 @@ export function NotificationInput({
     setIsLoading(true);
     setFetchError(null);
     try {
-      const response = await fetch("/api/notify-services");
+      // Use relative path for Ingress compatibility
+      const response = await fetch("./api/notify-services");
       if (response.ok) {
         const data = await response.json();
         if (data.services) {
