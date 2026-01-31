@@ -49,6 +49,14 @@ const publicDir = process.env.NODE_ENV === "production"
 
 app.use(express.static(publicDir, {
   maxAge: "1h",
+  setHeaders: (res, filePath) => {
+    // Ensure correct MIME types for static assets
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  },
 }));
 
 // Fallback to index.html for SPA routing (Express 5 uses /* pattern with named param)
