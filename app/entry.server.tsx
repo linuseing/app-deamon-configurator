@@ -13,15 +13,25 @@ export default function handleRequest(
     routerContext: EntryContext,
     loadContext: AppLoadContext
 ) {
-    // In SPA mode, we still render the shell but let the client handle routing
-    // The client will detect the basename from window.location
+    // Get the ingress path from the header (Nginx passes this through)
+    const ingressPath = request.headers.get("x-ingress-path") || "";
     
+    // Clean up basename
+    let basename = ingressPath;
+    if (basename && basename !== "/" && basename.endsWith("/")) {
+        basename = basename.slice(0, -1);
+    }
+    
+    // Debug logging
+    console.log(`[entry.server] URL: ${request.url}, X-Ingress-Path: "${ingressPath}", basename: "${basename}"`);
+
     return new Promise((resolve, reject) => {
         let shellRendered = false;
         const { pipe, abort } = renderToPipeableStream(
             <ServerRouter
                 context={routerContext}
                 url={request.url}
+                basename={basename || undefined}
             />,
             {
                 onShellReady() {

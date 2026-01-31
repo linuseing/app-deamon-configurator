@@ -14,8 +14,16 @@ app.disable("x-powered-by");
 // Logging
 app.use(morgan("tiny"));
 
+// Debug: Log ingress path header
+app.use((req, res, next) => {
+    const ingressPath = req.headers["x-ingress-path"];
+    if (ingressPath) {
+        console.log(`[Ingress] X-Ingress-Path: ${ingressPath}`);
+    }
+    next();
+});
+
 // Serve static assets from client build
-// Vite puts assets in build/client/assets, served at /assets
 app.use(express.static("build/client", {
     maxAge: "1h",
 }));
