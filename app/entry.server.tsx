@@ -13,23 +13,15 @@ export default function handleRequest(
     routerContext: EntryContext,
     loadContext: AppLoadContext
 ) {
-    // Get the ingress path from the header (Nginx passes this through)
-    // This tells React Router what the "base" URL is for route matching
-    const ingressPath = request.headers.get("x-ingress-path") || "";
+    // In SPA mode, we still render the shell but let the client handle routing
+    // The client will detect the basename from window.location
     
-    // Clean up basename (remove trailing slash if present, except for root)
-    let basename = ingressPath;
-    if (basename !== "/" && basename.endsWith("/")) {
-        basename = basename.slice(0, -1);
-    }
-
     return new Promise((resolve, reject) => {
         let shellRendered = false;
         const { pipe, abort } = renderToPipeableStream(
             <ServerRouter
                 context={routerContext}
                 url={request.url}
-                basename={basename}
             />,
             {
                 onShellReady() {
