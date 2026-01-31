@@ -3,7 +3,6 @@ import type { AppLoadContext, EntryContext } from "react-router";
 import { ServerRouter } from "react-router";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import { renderToPipeableStream } from "react-dom/server";
-import { isbot } from "isbot";
 
 export const streamTimeout = 5000;
 
@@ -14,12 +13,23 @@ export default function handleRequest(
     routerContext: EntryContext,
     loadContext: AppLoadContext
 ) {
+    // Get the ingress path from the header (Nginx passes this through)
+    // This tells React Router what the "base" URL is for route matching
+    const ingressPath = request.headers.get("x-ingress-path") || "";
+    
+    // Clean up basename (remove trailing slash if present, except for root)
+    let basename = ingressPath;
+    if (basename !== "/" && basename.endsWith("/")) {
+        basename = basename.slice(0, -1);
+    }
+
     return new Promise((resolve, reject) => {
         let shellRendered = false;
         const { pipe, abort } = renderToPipeableStream(
             <ServerRouter
                 context={routerContext}
                 url={request.url}
+                basename={basename}
             />,
             {
                 onShellReady() {
@@ -43,9 +53,6 @@ export default function handleRequest(
                 },
                 onError(error: unknown) {
                     responseStatusCode = 500;
-                    // Log streaming rendering errors from inside the shell.  Don't log
-                    // errors encountered during initial shell rendering since they'll
-                    // reject and get logged in handleDocumentRequest.
                     if (shellRendered) {
                         console.error(error);
                     }
