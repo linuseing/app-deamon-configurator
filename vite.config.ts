@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  // Use relative paths for assets
+  // Use relative paths for initial load compatibility with ingress
   base: "./",
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
 });
