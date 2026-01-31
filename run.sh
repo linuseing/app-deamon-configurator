@@ -14,6 +14,17 @@ export NODE_ENV="production"
 bashio::log.info "Starting AppDaemon Blueprint Configurator..."
 bashio::log.info "AppDaemon apps path: ${APPDAEMON_APPS_PATH}"
 
-# Change to app directory and start
+# Change to app directory
 cd /app
-exec npm run start
+
+# Start the Node.js server in the background
+bashio::log.info "Starting Node.js server on port 3000..."
+npm run start &
+NODE_PID=$!
+
+# Give Node.js a moment to start
+sleep 2
+
+# Start Nginx in the foreground (it handles ingress on port 8099)
+bashio::log.info "Starting Nginx reverse proxy on port 8099..."
+exec nginx -g "daemon off;"

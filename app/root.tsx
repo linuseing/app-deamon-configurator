@@ -5,7 +5,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useRouteLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -13,15 +12,9 @@ import { Navbar } from "./components/Navbar";
 import { isAddonMode } from "./lib/settings.server";
 import "./app.css";
 
-// Provide addon mode info and ingress path to the entire app
+// Provide addon mode info to the entire app
 export async function loader({ request }: Route.LoaderArgs) {
-  const ingressPath = request.headers.get("x-ingress-path") || "/";
-  // Clean up basename (remove trailing slash)
-  let basename = ingressPath;
-  if (basename !== "/" && basename.endsWith("/")) {
-    basename = basename.slice(0, -1);
-  }
-  return { addonMode: isAddonMode(), basename };
+  return { addonMode: isAddonMode() };
 }
 
 export const links: Route.LinksFunction = () => [
@@ -38,16 +31,11 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  // Get basename from root loader to set <base> tag for relative asset resolution
-  const data = useRouteLoaderData<typeof loader>("root");
-  const basename = data?.basename || "/";
-
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <base href={basename === "/" ? "/" : `${basename}/`} />
         <Meta />
         <Links />
       </head>
@@ -61,15 +49,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { addonMode, basename } = loaderData;
+  const { addonMode } = loaderData;
 
   return (
     <div className="min-h-screen flex flex-col">
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `window.BASENAME = ${JSON.stringify(basename)};`,
-        }}
-      />
       <Navbar addonMode={addonMode} />
       <main className="flex-1">
         <Outlet />

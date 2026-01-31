@@ -1,7 +1,5 @@
-import { useRouteLoaderData } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import type { BaseInputProps } from "./types";
-import type { loader as rootLoader } from "~/root";
 
 interface NotificationInputProps extends BaseInputProps { }
 
@@ -19,10 +17,6 @@ export function NotificationInput({
   errors,
 }: NotificationInputProps) {
   const error = errors?.[name];
-
-  // Get basename to ensure we fetch from the correct path (handling Ingress)
-  const rootData = useRouteLoaderData<typeof rootLoader>("root");
-  const basename = rootData?.basename === "/" ? "" : rootData?.basename || "";
 
   const [services, setServices] = useState<NotificationService[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +38,8 @@ export function NotificationInput({
     setIsLoading(true);
     setFetchError(null);
     try {
-      const response = await fetch(`${basename}/api/notify-services`);
+      // Simple path - Nginx handles path rewriting
+      const response = await fetch("/api/notify-services");
       if (response.ok) {
         const data = await response.json();
         if (data.services) {

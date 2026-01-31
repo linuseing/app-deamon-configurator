@@ -14,25 +14,12 @@ export default function handleRequest(
     routerContext: EntryContext,
     loadContext: AppLoadContext
 ) {
-    let userAgent = request.headers.get("user-agent");
-
-    // Handle Home Assistant Ingress base path
-    const ingressPath = request.headers.get("x-ingress-path") || "/";
-    // Remove trailing slash if present, as basename generally shouldn't have it
-    // unless it is just root "/"
-    let basename = ingressPath;
-    if (basename !== "/" && basename.endsWith("/")) {
-        basename = basename.slice(0, -1);
-    }
-
     return new Promise((resolve, reject) => {
         let shellRendered = false;
         const { pipe, abort } = renderToPipeableStream(
             <ServerRouter
                 context={routerContext}
                 url={request.url}
-                // @ts-ignore
-                basename={basename}
             />,
             {
                 onShellReady() {

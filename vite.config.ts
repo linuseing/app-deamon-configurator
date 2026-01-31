@@ -4,9 +4,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  base: "./",
-  build: {
-    assetsDir: "",
-  },
+  // Use absolute path since Nginx handles ingress path rewriting
+  base: "/",
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
 });

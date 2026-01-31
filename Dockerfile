@@ -23,8 +23,14 @@ RUN npm ci --omit=dev
 # Final image based on Home Assistant base image
 FROM $BUILD_FROM
 
-# Install Node.js runtime
-RUN apk add --no-cache nodejs npm
+# Install Node.js runtime and Nginx
+RUN apk add --no-cache nodejs npm nginx
+
+# Create nginx directories
+RUN mkdir -p /run/nginx
+
+# Copy Nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application
 WORKDIR /app
@@ -32,7 +38,7 @@ COPY package.json package-lock.json ./
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=build-env /app/build ./build
 
-# Copy run script
+# Copy run script and server
 COPY run.sh /run.sh
 COPY server.js /app/server.js
 RUN chmod a+x /run.sh

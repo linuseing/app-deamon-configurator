@@ -1,7 +1,5 @@
-import { useRouteLoaderData } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import type { BaseInputProps } from "./types";
-import type { loader as rootLoader } from "~/root";
 
 interface EntityInputProps extends BaseInputProps {
   domain?: string | string[];
@@ -21,16 +19,6 @@ export function EntityInput({
   const domainHint = Array.isArray(domain) ? domain.join(", ") : domain;
   const error = errors?.[name];
 
-  // Get basename to ensure we fetch from the correct path (handling Ingress)
-  const rootData = useRouteLoaderData<typeof rootLoader>("root");
-  const basename = rootData?.basename === "/" ? "" : rootData?.basename || "";
-  // Fallback to window.BASENAME if hook fails, just in case
-  const effectiveBasename = basename || (typeof window !== "undefined" ? (window as any).BASENAME : "") || "";
-
-  useEffect(() => {
-    console.log("[EntityInput] Mounted", { name, basename, effectiveBasename, rootData });
-  }, [name, basename, effectiveBasename, rootData]);
-
   const [entities, setEntities] = useState<{ value: string; label: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<{ value: string; label: string }[]>([]);
@@ -43,31 +31,25 @@ export function EntityInput({
 
   const { ref: inputRef, ...restRegister } = register(name, { required });
 
-  // Build the fetch URL
+  // Build the fetch URL - now simple since Nginx handles path rewriting
   const buildFetchUrl = () => {
     const params = new URLSearchParams();
     if (domain) {
       const domains = Array.isArray(domain) ? domain : [domain];
       params.append("domain", domains.join(","));
     }
-    const url = `${effectiveBasename}/api/entities?${params.toString()}`;
-    console.log("[EntityInput] Built URL:", url);
-    return url;
+    return `/api/entities?${params.toString()}`;
   };
 
   const fetchEntities = async () => {
-    console.log("[EntityInput] fetchEntities called", { isLoading, hasFetched });
     if (isLoading) return;
 
     setIsLoading(true);
     try {
       const url = buildFetchUrl();
-      console.log("[EntityInput] Fetching:", url);
       const response = await fetch(url);
-      console.log("[EntityInput] Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
-        console.log("[EntityInput] Data received:", data);
         if (data.entities) {
           setEntities(data.entities);
           setSuggestions(data.entities);
@@ -168,8 +150,6 @@ export function EntityInput({
           {...restRegister}
           ref={(e) => {
             inputRef(e);
-            // We also want to track the value for filtering, but RHF's onChange handles the state.
-            // We'll attach a separate handler prop for the filter
           }}
           onChange={(e) => {
             restRegister.onChange(e);

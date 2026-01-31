@@ -1,5 +1,5 @@
 name: "AppDaemon Blueprint Configurator"
-version: "1.0.22"
+version: "1.0.23"
 slug: "appdaemon_configurator"
 description: "Configure AppDaemon apps using a blueprint-style UI inspired by Home Assistant blueprints"
 url: "https://github.com/your-username/app-demon-config"
@@ -14,7 +14,7 @@ arch:
 
 # Ingress configuration for seamless HA UI integration
 ingress: true
-ingress_port: 3000
+ingress_port: 8099
 panel_icon: "mdi:robot"
 panel_title: "AppDaemon Config"
 
