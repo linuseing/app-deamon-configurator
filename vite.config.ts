@@ -4,10 +4,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  // Use relative paths for assets so they resolve correctly through HA ingress
-  // When browser is at /api/hassio_ingress/.../
-  // ./assets/... resolves to /api/hassio_ingress/.../assets/...
-  // Nginx then proxies /assets/... to Node.js
+  // Use relative paths for assets
   base: "./",
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
 });
