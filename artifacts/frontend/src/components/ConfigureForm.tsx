@@ -72,6 +72,7 @@ export function ConfigureForm({
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm({
     defaultValues,
   });
@@ -79,7 +80,7 @@ export function ConfigureForm({
   // Reset form when blueprint changes
   useEffect(() => {
     reset(defaultValues);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blueprintId, reset]);
 
   const handleFormSubmit = (data: Record<string, unknown>) => {
@@ -236,6 +237,7 @@ export function ConfigureForm({
             register={register}
             control={control}
             errors={errors}
+            setValue={setValue}
           />
         ))}
       </div>
@@ -288,9 +290,10 @@ interface ConfigItemProps {
   register: ReturnType<typeof useForm>["register"];
   control: ReturnType<typeof useForm>["control"];
   errors: ReturnType<typeof useForm>["formState"]["errors"];
+  setValue: ReturnType<typeof useForm>["setValue"];
 }
 
-function ConfigItem({ itemKey, item, register, control, errors }: ConfigItemProps) {
+function ConfigItem({ itemKey, item, register, control, errors, setValue }: ConfigItemProps) {
   if (isSection(item)) {
     return (
       <div className="py-4 first:pt-0 last:pb-0">
@@ -316,6 +319,7 @@ function ConfigItem({ itemKey, item, register, control, errors }: ConfigItemProp
                   register={register}
                   control={control}
                   errors={errors}
+                  setValue={setValue}
                 />
               ))}
             </div>
@@ -333,6 +337,7 @@ function ConfigItem({ itemKey, item, register, control, errors }: ConfigItemProp
         register={register}
         control={control}
         errors={errors}
+        setValue={setValue}
       />
     </div>
   );
@@ -344,9 +349,10 @@ interface InputFieldProps {
   register: ReturnType<typeof useForm>["register"];
   control: ReturnType<typeof useForm>["control"];
   errors: ReturnType<typeof useForm>["formState"]["errors"];
+  setValue: ReturnType<typeof useForm>["setValue"];
 }
 
-function InputField({ inputKey, input, register, control, errors }: InputFieldProps) {
+function InputField({ inputKey, input, register, control, errors, setValue }: InputFieldProps) {
   const selector = input.selector;
 
   if (!selector) {
@@ -372,6 +378,7 @@ function InputField({ inputKey, input, register, control, errors }: InputFieldPr
         domain={selector.entity.domain}
         deviceClass={selector.entity.device_class}
         multiple={selector.entity.multiple}
+        setValue={setValue}
       />
     );
   }

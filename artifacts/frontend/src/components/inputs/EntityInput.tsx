@@ -13,23 +13,34 @@ export function EntityInput({
   description,
   domain,
   required,
+  multiple,
   register,
   errors,
-}: EntityInputProps) {
+  setValue,
+}: EntityInputProps & { setValue?: any }) {
   const domainHint = Array.isArray(domain) ? domain.join(", ") : domain;
   const error = errors?.[name];
+
+  const { ref: inputRef, onChange: rhfOnChange, onBlur: rhfOnBlur, ...restRegister } = register(name, { required });
+
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const [filter, setFilter] = useState("");
 
   const [entities, setEntities] = useState<{ value: string; label: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<{ value: string; label: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filter, setFilter] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [hasFetched, setHasFetched] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
 
-  const { ref: inputRef, ...restRegister } = register(name, { required });
+  // Register the field manually if using multiple and we skipped the standard input registration
+  useEffect(() => {
+    if (multiple && register) {
+      register(name, { required });
+    }
+  }, [multiple, register, name, required]);
 
   const buildFetchUrl = () => {
     const params = new URLSearchParams();
@@ -37,7 +48,6 @@ export function EntityInput({
       const domains = Array.isArray(domain) ? domain : [domain];
       params.append("domain", domains.join(","));
     }
-    // Use relative path for Ingress compatibility
     return `./api/entities?${params.toString()}`;
   };
 
@@ -70,13 +80,16 @@ export function EntityInput({
 
   useEffect(() => {
     if (entities.length > 0) {
-      const filtered = entities.filter((s) =>
-        s.value.toLowerCase().includes(filter.toLowerCase()) ||
-        s.label.toLowerCase().includes(filter.toLowerCase())
-      );
+      const filtered = entities.filter((s) => {
+        if (multiple && selectedValues.includes(s.value)) return false;
+        return (
+          s.value.toLowerCase().includes(filter.toLowerCase()) ||
+          s.label.toLowerCase().includes(filter.toLowerCase())
+        );
+      });
       setSuggestions(filtered);
     }
-  }, [filter, entities]);
+  }, [filter, entities, selectedValues, multiple]);
 
   const filteredSuggestions = suggestions;
 
@@ -93,19 +106,52 @@ export function EntityInput({
     }
   }, [selectedIndex]);
 
-  const selectSuggestion = (suggestion: { value: string; label: string }) => {
-    const input = document.getElementById(name) as HTMLInputElement;
-    if (input) {
-      input.value = suggestion.value;
-      const event = new Event('input', { bubbles: true });
-      input.dispatchEvent(event);
-      setFilter(suggestion.value);
+  const updateFormValue = (newValue: string | string[]) => {
+    if (setValue) {
+      setValue(name, newValue, { shouldValidate: true, shouldDirty: true });
     }
-    setShowSuggestions(false);
+  };
+
+  const selectSuggestion = (suggestion: { value: string; label: string }) => {
+    if (multiple) {
+      const newValues = [...selectedValues, suggestion.value];
+      setSelectedValues(newValues);
+      setFilter("");
+      updateFormValue(newValues);
+
+      const input = document.getElementById(name) as HTMLInputElement;
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+    } else {
+      const input = document.getElementById(name) as HTMLInputElement;
+      if (input) {
+        input.value = suggestion.value;
+        const event = new Event('input', { bubbles: true });
+        input.dispatchEvent(event);
+        setFilter(suggestion.value);
+      }
+    }
+
+    if (!multiple) {
+      setShowSuggestions(false);
+    }
     setSelectedIndex(-1);
   };
 
+  const removeValue = (valueToRemove: string) => {
+    const newValues = selectedValues.filter(v => v !== valueToRemove);
+    setSelectedValues(newValues);
+    updateFormValue(newValues);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (multiple && e.key === "Backspace" && filter === "" && selectedValues.length > 0) {
+      removeValue(selectedValues[selectedValues.length - 1]);
+      return;
+    }
+
     if (!showSuggestions || filteredSuggestions.length === 0) {
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         setShowSuggestions(true);
@@ -136,70 +182,89 @@ export function EntityInput({
         {label}
         {required && <span className="text-error ml-1">*</span>}
       </label>
-      <div className="flex relative">
-        <input
-          type="text"
-          id={name}
-          autoComplete="off"
-          placeholder={domainHint ? `${domainHint}.entity_id` : "entity_id"}
-          className={`input input-bordered input-sm flex-1 font-mono text-sm bg-base-200 border-base-300 focus:border-primary ${error ? "input-error" : ""}`}
-          {...restRegister}
-          ref={(e) => {
-            inputRef(e);
-          }}
-          onChange={(e) => {
-            restRegister.onChange(e);
-            setFilter(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (!hasFetched) {
+
+      <div className={`flex flex-wrap items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-lg focus-within:border-primary ${error ? "border-error" : ""}`}>
+        {multiple && selectedValues.map(val => (
+          <span key={val} className="badge badge-primary badge-sm gap-1">
+            {val}
+            <button type="button" onClick={() => removeValue(val)} className="btn btn-ghost btn-xs w-4 h-4 min-h-0 p-0 rounded-full text-primary-content hover:bg-primary-focus">
+              ×
+            </button>
+          </span>
+        ))}
+
+        <div className="flex-1 flex relative min-w-[150px]">
+          <input
+            type="text"
+            id={name}
+            autoComplete="off"
+            placeholder={multiple && selectedValues.length > 0 ? "" : (domainHint ? `${domainHint}.entity_id` : "entity_id")}
+            // Bind register for single, but avoid for multiple search input 
+            {...(!multiple ? restRegister : {})}
+            name={multiple ? `${name}_search` : name}
+            ref={(e) => {
+              if (!multiple) inputRef(e);
+            }}
+            className={`input input-ghost input-sm flex-1 font-mono text-sm focus:outline-none w-full p-0 h-auto min-h-[1.5rem]`}
+            onChange={(e) => {
+              if (!multiple) {
+                rhfOnChange(e);
+              }
+              setFilter(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onBlur={(e) => {
+              if (!multiple) {
+                rhfOnBlur(e);
+              }
+              setTimeout(() => setShowSuggestions(false), 200);
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (!hasFetched) {
+                fetchEntities();
+              }
+              if (suggestions.length > 0) {
+                setShowSuggestions(true);
+              }
+            }}
+          />
+
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => {
               fetchEntities();
-            }
-            if (suggestions.length > 0) {
+              const input = document.getElementById(name) as HTMLInputElement;
+              if (input) input.focus();
               setShowSuggestions(true);
-            }
-          }}
-          onBlur={(e) => {
-            restRegister.onBlur(e);
-            setTimeout(() => setShowSuggestions(false), 200);
-          }}
-        />
-        <button
-          type="button"
-          tabIndex={-1}
-          onClick={() => {
-            fetchEntities();
-            if (suggestions.length > 0) {
-              setShowSuggestions(true);
-            }
-          }}
-          className={`btn btn-sm btn-ghost ml-1 ${isLoading ? "loading" : ""}`}
-          title="Refresh entities from Home Assistant"
-        >
-          {!isLoading ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          ) : null}
-        </button>
+            }}
+            className={`btn btn-sm btn-ghost btn-square min-h-0 h-6 w-6 absolute right-0 top-0 ${isLoading ? "loading" : ""}`}
+            title="Refresh entities"
+          >
+            {!isLoading && (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
 
         {showSuggestions && filteredSuggestions.length > 0 && (
           <ul
             ref={listRef}
-            className="absolute z-50 top-full left-0 right-12 mt-1 max-h-60 overflow-y-auto bg-base-100 border border-base-300 rounded-lg shadow-lg"
+            className="absolute z-50 top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-base-100 border border-base-300 rounded-lg shadow-lg"
           >
             {filteredSuggestions.map((s, index) => (
               <li
