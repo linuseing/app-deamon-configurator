@@ -1,5 +1,5 @@
 name: "AppDaemon Blueprint Configurator"
-version: "2.1.3"
+version: "2.1.4"
 slug: "appdaemon_configurator"
 description: "Configure AppDaemon apps using a blueprint-style UI inspired by Home Assistant blueprints"
 url: "https://github.com/your-username/app-demon-config"
