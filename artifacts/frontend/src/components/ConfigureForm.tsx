@@ -238,6 +238,7 @@ export function ConfigureForm({
             control={control}
             errors={errors}
             setValue={setValue}
+            defaultValues={defaultValues}
           />
         ))}
       </div>
@@ -291,9 +292,10 @@ interface ConfigItemProps {
   control: ReturnType<typeof useForm>["control"];
   errors: ReturnType<typeof useForm>["formState"]["errors"];
   setValue: ReturnType<typeof useForm>["setValue"];
+  defaultValues: Record<string, unknown>;
 }
 
-function ConfigItem({ itemKey, item, register, control, errors, setValue }: ConfigItemProps) {
+function ConfigItem({ itemKey, item, register, control, errors, setValue, defaultValues }: ConfigItemProps) {
   if (isSection(item)) {
     return (
       <div className="py-4 first:pt-0 last:pb-0">
@@ -320,6 +322,7 @@ function ConfigItem({ itemKey, item, register, control, errors, setValue }: Conf
                   control={control}
                   errors={errors}
                   setValue={setValue}
+                  defaultValues={defaultValues}
                 />
               ))}
             </div>
@@ -338,6 +341,7 @@ function ConfigItem({ itemKey, item, register, control, errors, setValue }: Conf
         control={control}
         errors={errors}
         setValue={setValue}
+        defaultValue={defaultValues[itemKey]}
       />
     </div>
   );
@@ -350,9 +354,10 @@ interface InputFieldProps {
   control: ReturnType<typeof useForm>["control"];
   errors: ReturnType<typeof useForm>["formState"]["errors"];
   setValue: ReturnType<typeof useForm>["setValue"];
+  defaultValue?: unknown;
 }
 
-function InputField({ inputKey, input, register, control, errors, setValue }: InputFieldProps) {
+function InputField({ inputKey, input, register, control, errors, setValue, defaultValue }: InputFieldProps) {
   const selector = input.selector;
 
   if (!selector) {
@@ -379,6 +384,7 @@ function InputField({ inputKey, input, register, control, errors, setValue }: In
         deviceClass={selector.entity?.device_class}
         multiple={selector.entity?.multiple}
         setValue={setValue}
+        defaultValue={defaultValue}
       />
     );
   }

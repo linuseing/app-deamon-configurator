@@ -17,13 +17,20 @@ export function EntityInput({
   register,
   errors,
   setValue,
-}: EntityInputProps & { setValue?: any }) {
+  defaultValue,
+}: EntityInputProps & { setValue?: any; defaultValue?: unknown }) {
   const domainHint = Array.isArray(domain) ? domain.join(", ") : domain;
   const error = errors?.[name];
 
   const { ref: inputRef, onChange: rhfOnChange, onBlur: rhfOnBlur, ...restRegister } = register(name, { required });
 
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const [selectedValues, setSelectedValues] = useState<string[]>(() => {
+    if (multiple && Array.isArray(defaultValue)) {
+      return defaultValue as string[];
+    }
+    return [];
+  });
+
   const [filter, setFilter] = useState("");
 
   const [entities, setEntities] = useState<{ value: string; label: string }[]>([]);
