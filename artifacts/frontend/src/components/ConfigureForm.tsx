@@ -297,7 +297,7 @@ function ConfigItem({ itemKey, item, register, control, errors, setValue }: Conf
   if (isSection(item)) {
     return (
       <div className="py-4 first:pt-0 last:pb-0">
-        <details className="group collapse collapse-arrow bg-base-100 border border-base-300 rounded-lg">
+        <details className="group collapse collapse-arrow bg-base-100 border border-base-300 rounded-lg overflow-visible">
           <summary className="collapse-title text-base font-medium">
             <div className="flex items-center gap-2">
               {item.icon && <span className={`mdi ${item.icon}`} />}
@@ -309,7 +309,7 @@ function ConfigItem({ itemKey, item, register, control, errors, setValue }: Conf
               </div>
             )}
           </summary>
-          <div className="collapse-content">
+          <div className="collapse-content overflow-visible">
             <div className="divide-y divide-base-300">
               {Object.entries(item.input).map(([key, input]) => (
                 <ConfigItem
