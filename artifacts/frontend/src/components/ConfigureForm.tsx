@@ -375,9 +375,9 @@ function InputField({ inputKey, input, register, control, errors, setValue }: In
         description={input.description}
         register={register}
         errors={errors}
-        domain={selector.entity.domain}
-        deviceClass={selector.entity.device_class}
-        multiple={selector.entity.multiple}
+        domain={selector.entity?.domain}
+        deviceClass={selector.entity?.device_class}
+        multiple={selector.entity?.multiple}
         setValue={setValue}
       />
     );
@@ -391,11 +391,11 @@ function InputField({ inputKey, input, register, control, errors, setValue }: In
         description={input.description}
         control={control}
         errors={errors}
-        min={selector.number.min}
-        max={selector.number.max}
-        step={selector.number.step}
-        unit={selector.number.unit_of_measurement}
-        mode={selector.number.mode}
+        min={selector.number?.min}
+        max={selector.number?.max}
+        step={selector.number?.step}
+        unit={selector.number?.unit_of_measurement}
+        mode={selector.number?.mode}
         defaultValue={input.default as number | undefined}
       />
     );
@@ -409,8 +409,8 @@ function InputField({ inputKey, input, register, control, errors, setValue }: In
         description={input.description}
         register={register}
         errors={errors}
-        multiline={selector.text.multiline}
-        type={selector.text.type}
+        multiline={selector.text?.multiline}
+        type={selector.text?.type}
       />
     );
   }
@@ -435,8 +435,8 @@ function InputField({ inputKey, input, register, control, errors, setValue }: In
         description={input.description}
         register={register}
         errors={errors}
-        options={selector.select.options}
-        multiple={selector.select.multiple}
+        options={selector.select?.options || []}
+        multiple={selector.select?.multiple}
       />
     );
   }
