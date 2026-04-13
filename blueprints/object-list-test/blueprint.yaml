@@ -1,0 +1,57 @@
+blueprint:
+  name: Object List Test
+  domain: automation
+  description: Testing object list inputs with camera configuration
+  author: Test
+
+input:
+  notification_service:
+    name: Notification Service
+    description: Service to use for notifications
+    selector:
+      text: {}
+  cameras:
+    name: Cameras
+    description: Configure your cameras
+    selector:
+      object_list:
+        fields:
+          name:
+            name: Camera Name
+            selector:
+              text: {}
+          frigate_camera_name:
+            name: Frigate Camera Name
+            description: Must match Frigate camera name
+            selector:
+              text: {}
+          object_types:
+            name: Object Types
+            selector:
+              select:
+                options:
+                  - person
+                  - package
+                  - car
+                  - dog
+                multiple: true
+          notify_always:
+            name: Always Notify
+            default: false
+            selector:
+              boolean: {}
+          ptz_enabled:
+            name: PTZ Enabled
+            default: false
+            selector:
+              boolean: {}
+          cooldown:
+            name: Cooldown (seconds)
+            default: 30
+            selector:
+              number:
+                min: 0
+                max: 600
+                step: 5
+                unit_of_measurement: seconds
+                mode: box
