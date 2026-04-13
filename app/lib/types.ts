@@ -72,6 +72,12 @@ export interface NotificationSelector {
   notify: Record<string, never>;
 }
 
+export interface ObjectListSelector {
+  object_list: {
+    fields: Record<string, BlueprintInput>;
+  };
+}
+
 export type Selector =
   | EntitySelector
   | DeviceSelector
@@ -82,7 +88,8 @@ export type Selector =
   | SelectSelector
   | TimeSelector
   | DateTimeSelector
-  | NotificationSelector;
+  | NotificationSelector
+  | ObjectListSelector;
 
 // Blueprint input definition
 export interface BlueprintInput {
@@ -244,6 +251,38 @@ export function isNotificationSelector(
   selector: Selector
 ): selector is NotificationSelector {
   return "notify" in selector;
+}
+
+export function isObjectListSelector(
+  selector: Selector
+): selector is ObjectListSelector {
+  return "object_list" in selector;
+}
+
+/**
+ * Convert object list item values to proper types based on field selector definitions.
+ * Used server-side when parsing JSON-serialized object_list form data.
+ */
+export function convertObjectListValues(
+  items: Record<string, unknown>[],
+  fields: Record<string, BlueprintInput>
+): Record<string, unknown>[] {
+  return items.map((item) => {
+    const converted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(item)) {
+      const fieldDef = fields[key];
+      if (!fieldDef?.selector) {
+        converted[key] = value;
+      } else if ("number" in fieldDef.selector) {
+        converted[key] = Number(value);
+      } else if ("boolean" in fieldDef.selector) {
+        converted[key] = value === true || value === "true" || value === "on";
+      } else {
+        converted[key] = value;
+      }
+    }
+    return converted;
+  });
 }
 
 // Type guard for BlueprintSection

@@ -4,4 +4,5 @@ export { TextInput } from "./TextInput";
 export { BooleanInput } from "./BooleanInput";
 export { SelectInput } from "./SelectInput";
 export { NotificationInput } from "./NotificationInput";
+export { ObjectListInput } from "./ObjectListInput";
 export type { BaseInputProps, ControlledInputProps } from "./types";

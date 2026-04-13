@@ -3,7 +3,7 @@ import { redirect, Link } from "react-router";
 import { getAppInstance, updateAppInstance } from "~/lib/apps.server";
 import { getBlueprint } from "~/lib/blueprint.server";
 import { getAppSettings, stripQuotes, isAddonMode } from "~/lib/settings.server";
-import { flattenInputs } from "~/lib/types";
+import { flattenInputs, convertObjectListValues } from "~/lib/types";
 import { ConfigureForm } from "~/components/ConfigureForm";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -111,7 +111,17 @@ export async function action({ request, params }: Route.ActionArgs) {
       const selector = inputDef.selector;
 
       // Handle type conversions
-      if ("number" in selector) {
+      if ("object_list" in selector) {
+        try {
+          const parsed = JSON.parse(strValue);
+          typedValues[key] = convertObjectListValues(
+            parsed,
+            selector.object_list.fields
+          );
+        } catch {
+          typedValues[key] = [];
+        }
+      } else if ("number" in selector) {
         typedValues[key] = Number(strValue);
       } else if ("boolean" in selector) {
         typedValues[key] = strValue === "true" || strValue === "on";
@@ -234,6 +244,7 @@ import {
   isBooleanSelector,
   isSelectSelector,
   isNotificationSelector,
+  isObjectListSelector,
   getSelectorType,
   isSection,
 } from "~/lib/types";
@@ -244,6 +255,7 @@ import {
   BooleanInput,
   SelectInput,
   NotificationInput,
+  ObjectListInput,
 } from "~/components/inputs";
 
 interface ConfigureFormWithValuesProps {
@@ -441,6 +453,7 @@ function ConfigureFormWithValues({
               register={register}
               control={control}
               errors={errors}
+              existingValues={existingValues}
             />
           ))}
       </div>
@@ -496,6 +509,7 @@ interface ConfigItemEditProps {
   register: ReturnType<typeof useRemixForm>["register"];
   control: ReturnType<typeof useRemixForm>["control"];
   errors: ReturnType<typeof useRemixForm>["formState"]["errors"];
+  existingValues?: Record<string, unknown>;
 }
 
 function ConfigItemEdit({
@@ -504,6 +518,7 @@ function ConfigItemEdit({
   register,
   control,
   errors,
+  existingValues,
 }: ConfigItemEditProps) {
   if (isSection(item)) {
     return (
@@ -530,6 +545,7 @@ function ConfigItemEdit({
                   register={register}
                   control={control}
                   errors={errors}
+                  existingValues={existingValues}
                 />
               ))}
             </div>
@@ -547,6 +563,7 @@ function ConfigItemEdit({
         register={register}
         control={control}
         errors={errors}
+        existingValues={existingValues}
       />
     </div>
   );
@@ -558,6 +575,7 @@ interface InputFieldEditProps {
   register: ReturnType<typeof useRemixForm>["register"];
   control: ReturnType<typeof useRemixForm>["control"];
   errors: ReturnType<typeof useRemixForm>["formState"]["errors"];
+  existingValues?: Record<string, unknown>;
 }
 
 function InputFieldEdit({
@@ -566,6 +584,7 @@ function InputFieldEdit({
   register,
   control,
   errors,
+  existingValues,
 }: InputFieldEditProps) {
   const selector = input.selector;
 
@@ -662,6 +681,24 @@ function InputFieldEdit({
         description={input.description}
         register={register}
         errors={errors}
+      />
+    );
+  }
+
+  if (isObjectListSelector(selector)) {
+    const existingListValue = existingValues?.[inputKey] as
+      | Record<string, unknown>[]
+      | undefined;
+    return (
+      <ObjectListInput
+        name={inputKey}
+        label={input.name}
+        description={input.description}
+        fields={selector.object_list.fields}
+        defaultValue={
+          existingListValue ??
+          (input.default as Record<string, unknown>[] | undefined)
+        }
       />
     );
   }

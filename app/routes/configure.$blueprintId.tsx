@@ -3,7 +3,7 @@ import { redirect, Link } from "react-router";
 import { getBlueprint } from "~/lib/blueprint.server";
 import { createAppInstance, getAppInstances, generateInstanceId, toPascalCase } from "~/lib/apps.server";
 import { getAppSettings, stripQuotes } from "~/lib/settings.server";
-import { flattenInputs } from "~/lib/types";
+import { flattenInputs, convertObjectListValues } from "~/lib/types";
 import { ConfigureForm } from "~/components/ConfigureForm";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -87,7 +87,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     const selector = inputDef.selector;
 
     // Handle type conversions
-    if ("number" in selector) {
+    if ("object_list" in selector) {
+      try {
+        const parsed = JSON.parse(strValue);
+        typedValues[key] = convertObjectListValues(
+          parsed,
+          selector.object_list.fields
+        );
+      } catch {
+        typedValues[key] = [];
+      }
+    } else if ("number" in selector) {
       typedValues[key] = Number(strValue);
     } else if ("boolean" in selector) {
       typedValues[key] = strValue === "true" || strValue === "on";
