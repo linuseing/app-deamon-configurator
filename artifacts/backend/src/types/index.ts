@@ -72,6 +72,12 @@ export interface NotificationSelector {
   notify: Record<string, never>;
 }
 
+export interface ObjectListSelector {
+  object_list: {
+    fields: Record<string, BlueprintInput>;
+  };
+}
+
 export type Selector =
   | EntitySelector
   | DeviceSelector
@@ -82,7 +88,8 @@ export type Selector =
   | SelectSelector
   | TimeSelector
   | DateTimeSelector
-  | NotificationSelector;
+  | NotificationSelector
+  | ObjectListSelector;
 
 // Blueprint input definition
 export interface BlueprintInput {
@@ -244,6 +251,12 @@ export function isNotificationSelector(
   selector: Selector
 ): selector is NotificationSelector {
   return "notify" in selector;
+}
+
+export function isObjectListSelector(
+  selector: Selector
+): selector is ObjectListSelector {
+  return "object_list" in selector;
 }
 
 // Type guard for BlueprintSection

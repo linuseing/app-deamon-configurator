@@ -10,6 +10,40 @@ import {
 import { getBlueprint, toPascalCase } from "../lib/blueprint.js";
 import { getAppSettings, stripQuotes } from "../lib/settings.js";
 import { flattenInputs } from "../types/index.js";
+import type { Selector, BlueprintInput } from "../types/index.js";
+
+function convertValue(
+  value: unknown,
+  selector: Selector | undefined,
+  stripQuotesFn: (s: string) => string
+): unknown {
+  if (!selector) {
+    return typeof value === "string" ? stripQuotesFn(value) : value;
+  }
+
+  if ("object_list" in selector) {
+    if (!Array.isArray(value)) return [];
+    const fields = selector.object_list.fields;
+    return value.map((item: Record<string, unknown>) => {
+      const converted: Record<string, unknown> = {};
+      for (const [fieldKey, fieldValue] of Object.entries(item || {})) {
+        const fieldDef: BlueprintInput | undefined = fields[fieldKey];
+        converted[fieldKey] = convertValue(fieldValue, fieldDef?.selector, stripQuotesFn);
+      }
+      return converted;
+    });
+  }
+
+  const strValue = typeof value === "string" ? stripQuotesFn(value) : value;
+
+  if ("number" in selector) {
+    return Number(strValue);
+  } else if ("boolean" in selector) {
+    return strValue === "true" || strValue === true;
+  } else {
+    return strValue;
+  }
+}
 
 export const instancesRouter = Router();
 
@@ -96,22 +130,7 @@ instancesRouter.post("/", async (req, res) => {
 
     for (const [key, value] of Object.entries(config || {})) {
       const inputDef = flatInputs[key];
-      const strValue = typeof value === "string" ? stripQuotes(value) : value;
-
-      if (!inputDef?.selector) {
-        typedValues[key] = strValue;
-        continue;
-      }
-
-      const selector = inputDef.selector;
-
-      if ("number" in selector) {
-        typedValues[key] = Number(strValue);
-      } else if ("boolean" in selector) {
-        typedValues[key] = strValue === "true" || strValue === true;
-      } else {
-        typedValues[key] = strValue;
-      }
+      typedValues[key] = convertValue(value, inputDef?.selector, stripQuotes);
     }
 
     // Get existing instances to generate unique ID if needed
@@ -189,22 +208,7 @@ instancesRouter.put("/:id", async (req, res) => {
 
       for (const [key, value] of Object.entries(config || {})) {
         const inputDef = flatInputs[key];
-        const strValue = typeof value === "string" ? stripQuotes(value) : value;
-
-        if (!inputDef?.selector) {
-          typedValues[key] = strValue;
-          continue;
-        }
-
-        const selector = inputDef.selector;
-
-        if ("number" in selector) {
-          typedValues[key] = Number(strValue);
-        } else if ("boolean" in selector) {
-          typedValues[key] = strValue === "true" || strValue === true;
-        } else {
-          typedValues[key] = strValue;
-        }
+        typedValues[key] = convertValue(value, inputDef?.selector, stripQuotes);
       }
     } else {
       // No blueprint, just pass values through
