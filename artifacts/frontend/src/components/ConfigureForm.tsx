@@ -8,6 +8,7 @@ import {
   isBooleanSelector,
   isSelectSelector,
   isNotificationSelector,
+  isObjectListSelector,
   getSelectorType,
   flattenInputs,
   isSection,
@@ -19,6 +20,7 @@ import {
   BooleanInput,
   SelectInput,
   NotificationInput,
+  ObjectListInput,
 } from "./inputs";
 
 interface ConfigureFormProps {
@@ -63,6 +65,8 @@ export function ConfigureForm({
       defaultValues[key] = existingValues[key];
     } else if (input.default !== undefined) {
       defaultValues[key] = input.default;
+    } else if (input.selector && isObjectListSelector(input.selector)) {
+      defaultValues[key] = [];
     }
   }
 
@@ -455,6 +459,21 @@ function InputField({ inputKey, input, register, control, errors, setValue, defa
         description={input.description}
         register={register}
         errors={errors}
+      />
+    );
+  }
+
+  if (isObjectListSelector(selector)) {
+    return (
+      <ObjectListInput
+        name={inputKey}
+        label={input.name}
+        description={input.description}
+        fields={selector.object_list.fields}
+        control={control}
+        register={register}
+        errors={errors}
+        setValue={setValue}
       />
     );
   }
